@@ -54,7 +54,7 @@
 7.  **appsscript.json設定:** `src/appsscript.json` を開き、`timeZone`, `webapp`, `oauthScopes` などが `docs/REQUIREMENTS.txt` や本ガイドの推奨設定と一致しているか確認・修正します。**特に `webapp.executeAs` は `"USER_ACCESSING"` になっているか確認してください。**
 8.  **code.js設定:** `src/code.js` を作成または開き、`IS_PRODUCTION = false` とし、控えておいた **`TEST_SPREADSHEET_ID`** を設定します。各種シート名の定数も定義します。基本的な `doGet`, `include` 関数も記述します。
 9.  **初期Push:** ターミナルで `clasp push` を実行し、ローカルの `code.js` と `appsscript.json` がGASプロジェクトに反映されることを確認します。
-10. **初期コミット:** `git add .` と `git commit -m "Initial setup for V2 project"` を実行し、ここまでの状態をGitに記録します。
+10. **初期コミット:** `git add .` と `git commit -m "初期設定: V2プロジェクトのセットアップ"` を実行し、ここまでの状態をGitに記録します。
 
 ### 3.3 リモートリポジトリ (GitHub等) の準備 (任意だが推奨)
 
@@ -66,68 +66,56 @@
     # git push -u origin main
     ```
 
-## 4. 開発の進め方（計画）
+## 4. 開発の進め方（計画と進捗）
 
 デバイドアンドコンカー方式に基づき、以下のステップで機能実装を進めます。コード編集は **VS Code**、バージョン管理は **Git**、GASプロジェクトへの反映は **`clasp push`**、テスト導入はGASエディタまたは `clasp deploy`、最終的なデプロイは **`clasp deploy`** で行います。
 
 ### **【進捗：完了】Step 0: プロジェクト初期セットアップ**
 
 *   **目的:** V2プロジェクトの開発基盤を構築。
-*   **実施内容:** 本ガイドの「3. 開発プロジェクトの準備」に記載の作業を実施。ローカル開発環境、Gitリポジトリ、テスト用GASプロジェクト、基本設定ファイル（`.gitignore`, `.clasp.json`, `appsscript.json`, `code.js`）、ドキュメントフォルダ構造の準備が完了。
+*   **実施内容:** 本ガイドの「3. 開発プロジェクトの準備」に記載の作業を実施。ローカル開発環境、Gitリポジトリ、テスト用GASプロジェクト、基本設定ファイル（`.gitignore`, `.clasp.json`, `appsscript.json`, `code.js`）、ドキュメントフォルダ構造、基本ドキュメント（`README.txt`, `REQUIREMENTS.txt`, 本ガイド）の準備が完了。
 *   **状況:** 共通基盤の実装を開始できる状態。
 
-### **【進捗：計画中】Step 1: 共通基盤の実装とテスト**
+### **【進捗：実施中】Step 1: 共通基盤の実装とテスト**
 
 *   **目的:** アプリ全体で利用する共通関数、スタイル、クライアントサイドJSを実装・テストする。
-*   **対象ファイル:** `src/Utils.js`, `src/styles.html`, `src/script.html` など。
-*   **作業内容:**
-    1.  `Utils.js` に共通GAS関数（例: `checkAdminAccess`, `isAdmin`, `logMessage` など）を実装・テスト (`clasp run` 等)。
-    2.  `styles.html` に基本的なCSSスタイル、共通クラスを定義。
-    3.  `script.html` に共通クライアントサイドJS関数（例: `showMessage`, `formatDate`, `handleError` など）を実装。
-    4.  `code.js` の `doGet` で簡単なHTMLページ（例: `index.html` の骨組み）を返し、`include('styles')` と `include('script')` が機能するか確認。
+*   **対象ファイル:** `src/Utils.js`, `src/styles.html`, `src/script.html`, `src/code.js` (一部) など。
+*   **現在の作業:**
+    *   `docs/CODING_STANDARD.txt` および `docs/specs/00_common_spec.txt` にデザイン方針、配色、コンポーネントスタイル、命名規則などを定義済み。
+    *   `src/styles.html` に基本CSS構造とスタイルをBEMに基づいて定義済み。
+    *   `src/Utils.js`, `src/script.html` ファイルを作成済み。
+*   **次のアクション:**
+    1.  `src/script.html` に共通クライアントサイドJS関数（例: `showMessage`, `formatDate`, `handleError` など）を実装する。
+    2.  `src/Utils.js` に共通GAS関数（例: `checkAdminAccess`, `isAdmin`, `logMessage` など）を実装・テスト (`clasp run` 等)。
+    3.  `src/code.js` の `doGet` で簡単なHTMLページ（例: `index.html` の骨組み）を返し、`<?!= include('styles'); ?>` と `<?!= include('script'); ?>` が機能するか確認する。
 *   **ドキュメント:** `docs/specs/00_common_spec.txt`, `docs/dev/00_common_dev.txt` を記述・更新。
 
 ### **【進捗：計画中】Step 2: 認証機能の実装とテスト**
 
 *   **目的:** ログイン、ログアウト、セッション管理機能を実装・テストする。
-*   **対象ファイル:** `src/Auth.js`, `src/index.html`, `src/script.html` (ログイン用JS), `src/code.js` (doGetの認証連携部分) など。
-*   **作業内容:**
-    1.  `Auth.js` に認証関連のGAS関数 (`checkSession`, `setSession`, `logout`, `loginWithGoogle` 等）を実装・テスト。
-    2.  `index.html` にログイン画面のHTMLを実装。
-    3.  `script.html` または専用の `login_script.html` にログイン処理のクライアントサイドJSを実装。
-    4.  `code.js` の `doGet` でログイン状態を判定し、`index.html` または `app.html` へ振り分けるロジックを実装。
+*   **対象ファイル:** `src/Auth.js`, `src/index.html`, (必要なら)`src/login_script.html`, `src/code.js` (doGetの認証連携部分) など。
+*   **作業内容:** 認証関連GAS関数の実装、ログイン画面HTML/JSの実装、`doGet` での画面振り分け。
 *   **ドキュメント:** `docs/specs/01_auth_spec.txt`, `docs/dev/01_auth_dev.txt`, `docs/API_SPEC.txt` (関連API) を記述・更新。
 
 ### **【進捗：計画中】Step 3: 練習記録機能の実装とテスト**
 
 *   **目的:** 練習記録入力画面（ユーザー向け）を実装・テストする。
 *   **対象ファイル:** `src/DataAccess.js`, `src/Auth.js` (データ取得関数), `src/app.html`, `src/app_script.html` など。
-*   **作業内容:**
-    1.  `Auth.js` に練習記録画面で必要なデータ取得関数 (`getTrainers`, `getTechCategories`, `getTechDetails`) を実装・テスト。
-    2.  `DataAccess.js` に練習記録保存・バリデーション関数 (`savePracticeRecord`, `validatePracticeRecord`, `updateWigInventoryOnRecord`) を実装・テスト。
-    3.  `app.html` に練習記録画面のHTMLを実装。
-    4.  `app_script.html` にデータ取得、動的項目制御、フォーム送信処理のクライアントサイドJSを実装。
+*   **作業内容:** データ取得/保存/バリデーションGAS関数の実装、記録画面HTML/JSの実装（動的制御含む）。
 *   **ドキュメント:** `docs/specs/02_record_spec.txt`, `docs/dev/02_record_dev.txt`, `docs/API_SPEC.txt` (関連API) を記述・更新。
 
 ### **【進捗：計画中】Step 4: 管理者機能（マスター管理）の実装とテスト**
 
 *   **目的:** 管理者向けのマスターデータ管理画面を実装・テストする。
 *   **対象ファイル:** `src/AdminHandler.js`, `src/admin.html`, `src/admin_script.html` など。
-*   **作業内容:**
-    1.  `AdminHandler.js` に各マスターのCRUD操作を行うGAS関数を実装・テスト。
-    2.  `admin.html` に管理者画面のHTML（タブ構造、フォーム、リスト）を実装。
-    3.  `admin_script.html` にタブ制御、データロード・表示、CRUD操作のクライアントサイドJSを実装。
+*   **作業内容:** マスターCRUD用GAS関数の実装、管理者画面HTML/JSの実装（タブ、フォーム、リスト）。
 *   **ドキュメント:** `docs/specs/03_admin_master_spec.txt`, `docs/dev/03_admin_master_dev.txt`, `docs/API_SPEC.txt` (関連API) を記述・更新。
 
 ### **【進捗：計画中】Step 5: 管理者機能（在庫管理）の実装とテスト**
 
 *   **目的:** 管理者向けの在庫管理画面を実装・テストする。
 *   **対象ファイル:** `src/DataAccess.js` (在庫取得), `src/AdminHandler.js` (在庫更新), `src/admin.html`, `src/admin_script.html` など。
-*   **作業内容:**
-    1.  `DataAccess.js` に在庫取得関数 (`getWigInventory`) を実装・テスト。
-    2.  `AdminHandler.js` に在庫手動更新関数 (`updateWigStock`) を実装・テスト。
-    3.  `admin.html` の在庫管理タブ部分のHTMLを実装。
-    4.  `admin_script.html` の在庫管理タブ関連のクライアントサイドJSを実装。
+*   **作業内容:** 在庫取得/更新GAS関数の実装、管理者画面在庫タブHTML/JSの実装。
 *   **ドキュメント:** `docs/specs/04_admin_inventory_spec.txt`, `docs/dev/04_admin_inventory_dev.txt`, `docs/API_SPEC.txt` (関連API) を記述・更新。
 
 ### **【進捗：計画中】Step 6: UI/UX 調整とエラーハンドリング強化**
@@ -175,13 +163,13 @@
 1.  `src/code.js` の `IS_PRODUCTION` を `true` に変更。
 2.  `.clasp.json` の `scriptId` を **本番用GASプロジェクトID** に変更（または本番用ブランチで管理）。
 3.  `clasp push` で本番GASプロジェクトにコードを反映。
-4.  `clasp deploy -V 1 -d "Initial production deployment"` を実行。
+4.  `clasp deploy -V 1 -d "初回本番デプロイ"` を実行 (コミットメッセージは日本語で)。
 5.  表示される **Web アプリ URL** をユーザーに共有。
 
 ### 6.2 更新デプロイ (本番用)
 
 1.  `clasp deployments` で最新のデプロイメントIDを確認。
-2.  `clasp deploy -i <デプロイメントID> -d "今回の更新内容の説明"` を実行。
+2.  `clasp deploy -i <デプロイメントID> -d "今回の更新内容の説明(日本語)"` を実行。
 
 ### 6.3 デプロイバージョンの管理
 
@@ -196,18 +184,19 @@
     *   `main`: 本番反映用ブランチ。安定版のみマージ。
     *   `develop`: 開発の主軸となるブランチ。機能ブランチからマージ。
     *   `feature/xxx`: 各機能開発用のブランチ。`develop` から分岐し、完了後に `develop` へPull Request (推奨)。
-*   **コミット:** 意味のある単位で `git commit -m " meaningful message"` をこまめに行う。
+*   **コミット:** 意味のある単位で `git commit -m "コミットメッセージ(日本語)"` をこまめに行う。（例: `git commit -m "機能: ログイン画面の基本HTMLを作成"`）
 *   **リモートリポジトリ:** GitHub等に `git push` してバックアップと共有を行う。
 
 ## 8. 注意事項
 
 *   **`.clasp.json`:** Script ID を含むため、`.gitignore` で管理対象外とし、環境ごとに設定する。
 *   **`.claspignore`:** 不要なファイル (例: `docs/`) が Push されないように設定する。ルートディレクトリに `.claspignore` ファイルを作成し、無視したいフォルダやファイルを記述 (例: `docs/**`)。
-*   **`appsscript.json`:** ローカルで管理し `clasp push` で反映させる。OAuthスコープ変更時は注意。
-*   **環境変数:** スプレッドシートID等は `code.js` でフラグ管理。機密情報はコードに直接書かない（GASのプロパティストア等を利用検討）。
-*   **Node.js/claspバージョン:** 開発者間でバージョンを揃えることが望ましい。
+*   **`appsscript.json`:** ローカルで管理し `clasp push` で反映させる。OAuthスコープ変更時はユーザー再認証が必要になる場合あり。
+*   **環境変数:** スプレッドシートID等は `code.js` でフラグ管理。APIキーなどの機密情報はコードに直接書かない（GASのプロパティストア等を利用検討）。
+*   **Node.js/claspバージョン:** 開発者間でバージョンを揃えることが望ましい (`clasp -v` で確認)。
 
 ## 9. 開発支援 (AI アシスタントの活用)
+
 
 このプロジェクトでは、開発効率の向上と問題解決の迅速化を目的として、AIアシスタント（大規模言語モデル、LLM）を積極的に活用しています。AIアシスタントには、主に以下の役割を期待しています。
 
