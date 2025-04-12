@@ -1,0 +1,225 @@
+<script>
+    /**
+     * 美容師練習管理アプリ V2 - 共通クライアントサイドJavaScript
+     */
+    
+    /**
+     * DOMの準備完了後に指定された関数を実行する
+     * @param {function} fn - 実行する関数
+     */
+    function domReady(fn) {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", fn);
+      } else {
+        // DOMが既に準備完了の場合
+        fn();
+      }
+    }
+    
+    /**
+     * 指定されたIDの要素にメッセージを表示する（BEMクラス対応版）
+     * @param {string} message - 表示するメッセージ
+     * @param {'success'|'error'|'info'} type - メッセージの種類 ('success', 'error', 'info')
+     * @param {string} [elementId='message'] - メッセージを表示する要素のID
+     */
+    function showMessage(message, type, elementId = 'message') {
+      const messageElement = document.getElementById(elementId);
+      if (!messageElement) {
+        console.error(`showMessage: Element with ID "${elementId}" not found.`);
+        return; // 要素が見つからない場合は処理中断
+      }
+    
+      // メッセージ内容を設定
+      messageElement.textContent = message;
+    
+      // 既存のタイプ関連クラスを削除 (modifierクラスを一旦リセット)
+      messageElement.classList.remove('message--success', 'message--error', 'message--info');
+    
+      // 新しいタイプクラスと表示クラスを追加
+      if (type === 'success' || type === 'error' || type === 'info') {
+        messageElement.classList.add(`message--${type}`);
+      }
+      messageElement.classList.add('message--visible'); // 表示状態にするクラス
+    
+      // 成功メッセージは一定時間後に自動で消す
+      if (type === 'success') {
+        setTimeout(() => {
+          // メッセージ内容が変更されていなければ消す
+          if (messageElement.textContent === message) {
+            messageElement.textContent = '';
+            messageElement.classList.remove('message--visible', `message--${type}`); // 表示クラスとタイプクラスを削除
+          }
+        }, 5000); // 5秒後に消す（時間は調整可）
+      }
+      // エラーや情報は手動で消すか、次の操作で上書きされるまで表示したままにする
+    }
+    
+    /**
+     * メッセージ表示をクリアする
+     * @param {string} [elementId='message'] - クリアするメッセージ要素のID
+     */
+    function clearMessage(elementId = 'message') {
+        const messageElement = document.getElementById(elementId);
+        if (messageElement) {
+            messageElement.textContent = '';
+            messageElement.classList.remove('message--visible', 'message--success', 'message--error', 'message--info');
+        }
+    }
+    
+    
+    /**
+     * Dateオブジェクトまたは日付文字列をYYYY-MM-DD形式に変換する
+     * @param {Date|string|null} date - 変換対象の日付
+     * @returns {string} YYYY-MM-DD形式の文字列、または空文字
+     */
+    function formatDate(date) {
+      if (!date) return '';
+      try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return ''; // 無効な日付の場合は空文字
+        const year = d.getFullYear();
+        const month = ('0' + (d.getMonth() + 1)).slice(-2);
+        const day = ('0' + d.getDate()).slice(-2);
+        return `${year}-${month}-${day}`;
+      } catch (e) {
+        console.error("formatDate error:", e);
+        return '';
+      }
+    }
+    
+    /**
+     * Dateオブジェクトまたは日付文字列をYYYY年MM月DD日形式に変換する
+     * @param {Date|string|null} date - 変換対象の日付
+     * @returns {string} YYYY年MM月DD日形式の文字列、または空文字
+     */
+    function formatDateJP(date) {
+      if (!date) return '';
+       try {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return ''; // 無効な日付の場合は空文字
+        const year = d.getFullYear();
+        const month = d.getMonth() + 1;
+        const day = d.getDate();
+        return `${year}年${month}月${day}日`;
+      } catch (e) {
+        console.error("formatDateJP error:", e);
+        return '';
+      }
+    }
+    
+    /**
+     * エラーをコンソールに出力し、指定要素にエラーメッセージを表示する共通関数
+     * @param {Error|string} error - エラーオブジェクトまたはエラーメッセージ文字列
+     * @param {string} messagePrefix - 表示するメッセージの接頭辞 (例: 'データの読み込みに失敗しました')
+     * @param {string} [elementId='message'] - メッセージを表示する要素のID
+     */
+    function handleError(error, messagePrefix, elementId = 'message') {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error(messagePrefix, error); // コンソールには詳細を出力
+      showMessage(`${messagePrefix}: ${errorMessage}`, 'error', elementId); // 画面には簡潔に表示
+    }
+    
+    /**
+     * 指定されたフォーム要素内の入力データを収集してオブジェクトとして返す
+     * @param {HTMLFormElement} formElement - 対象のフォーム要素
+     * @returns {Object} フォームデータのキーと値を持つオブジェクト
+     */
+    function collectFormData(formElement) {
+      if (!formElement || formElement.tagName !== 'FORM') {
+          console.error("collectFormData: Invalid form element provided.");
+          return {};
+      }
+      const formData = {};
+      const elements = formElement.elements; // form.elements を使う方が効率的
+    
+      for (let i = 0; i < elements.length; i++) {
+        const element = elements[i];
+        const name = element.name;
+        const type = element.type;
+    
+        if (!name || element.disabled) continue; // 名前がないか無効な要素はスキップ
+    
+        switch (type) {
+          case 'checkbox':
+            if (!formData[name]) {
+              formData[name] = []; // チェックボックスは配列で初期化
+            }
+            if (element.checked) {
+              formData[name].push(element.value);
+            }
+            break;
+          case 'radio':
+            if (element.checked) {
+              formData[name] = element.value;
+            }
+            break;
+          case 'select-multiple':
+            formData[name] = Array.from(element.selectedOptions).map(option => option.value);
+            break;
+          // text, password, date, number, select-one, textarea など
+          default:
+            formData[name] = element.value;
+            break;
+        }
+      }
+      return formData;
+    }
+    
+    /**
+     * スロットリング関数: 指定された時間内に最大1回だけ関数を実行する
+     * @param {function} func - スロットル対象の関数
+     * @param {number} delay - 遅延時間 (ミリ秒)
+     * @returns {function} スロットル化された関数
+     */
+    function throttle(func, delay) {
+      let throttling = false;
+      return function(...args) {
+        if (!throttling) {
+          func.apply(this, args);
+          throttling = true;
+          setTimeout(() => {
+            throttling = false;
+          }, delay);
+        }
+      };
+    }
+    
+    /**
+     * デバウンス関数: 最後の呼び出しから指定時間内に関数呼び出しがなければ実行する
+     * @param {function} func - デバウンス対象の関数
+     * @param {number} delay - 遅延時間 (ミリ秒)
+     * @returns {function} デバウンス化された関数
+     */
+    function debounce(func, delay) {
+      let timeoutId;
+      return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          func.apply(this, args);
+        }, delay);
+      };
+    }
+    
+    // --- GASサーバー関数呼び出しのラッパー (オプション) ---
+    // 必要であれば、google.script.run の呼び出しをラップする関数を作成し、
+    // ローディング表示の制御や共通エラーハンドリングをここに集約することも可能
+    /*
+    async function callServerFunction(functionName, ...args) {
+      // showLoading(true); // ローディング表示開始
+      try {
+        return await new Promise((resolve, reject) => {
+          google.script.run
+            .withSuccessHandler(resolve)
+            .withFailureHandler(reject)
+            [functionName](...args);
+        });
+      } catch (error) {
+        handleError(error, `サーバー関数 ${functionName} の呼び出し中にエラーが発生しました`);
+        throw error; // 必要に応じてエラーを再スロー
+      } finally {
+        // showLoading(false); // ローディング表示終了
+      }
+    }
+    */
+    
+    </script>
