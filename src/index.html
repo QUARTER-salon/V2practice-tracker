@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>美容師練習管理アプリ V2 (テスト)</title>
+  <?!= include('styles'); ?> <!-- スタイルを有効化 -->
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <h1>美容師練習管理アプリ V2</h1>
+      <div class="user-info"></div>
+    </div>
+  </header>
+
+  <main class="site-main container">
+    <h2>ようこそ！</h2>
+    <p>これは共通基盤の動作確認用ページです。</p>
+
+    <div id="message" class="message"></div> <!-- メッセージ表示エリア -->
+
+    <button class="btn btn--primary" onclick="testSuccessMessage()">成功メッセージ表示</button>
+    <button class="btn btn--danger" onclick="testErrorMessage()">エラーメッセージ表示</button>
+    <button class="btn btn--secondary" onclick="clearMessage('message')">メッセージクリア</button> <!-- clearMessageを呼び出す -->
+
+  </main>
+
+  <footer class="site-footer">
+    <p>© 2025 美容師練習管理アプリ V2</p>
+  </footer>
+
+  <?!= include('script'); ?> <!-- スクリプトを有効化 -->
+  <script>
+    // domReady を使って初期化処理を実行する例
+    domReady(function() {
+      console.log('DOM Ready! 初期化処理を実行できます。');
+      // ここにページ読み込み時に実行したい処理を追加できます
+    });
+
+    // テスト用関数
+    function testSuccessMessage() {
+      console.log('成功メッセージ表示ボタンクリック');
+      showMessage('テスト成功メッセージです！5秒後に消えます。', 'success', 'message');
+    }
+    function testErrorMessage() {
+      console.log('エラーメッセージ表示ボタンクリック');
+      showMessage('テストエラーメッセージです。クリアボタンで消してください。', 'error', 'message');
+    }
+  </script>
+</body>
+</html>

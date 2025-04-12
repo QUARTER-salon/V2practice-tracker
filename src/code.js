@@ -32,13 +32,14 @@ function doGet(e) {
   // TODO: 認証ロジックやページルーティングを実装する
   // 現時点では簡単なHTMLを返す
   try {
-    // 将来的に index.html を読み込むように変更します
-    // 現時点では動作確認用に単純なテキストを返します
-    return HtmlService.createHtmlOutput('<p>美容師練習管理アプリ V2 へようこそ！ (開発中)</p>')
-           .setTitle('美容師練習管理アプリ V2');
+    // index.html テンプレートを評価して返す
+    return HtmlService.createTemplateFromFile('index').evaluate() // ← この行を実行するように変更
+           .setTitle('美容師練習管理アプリ V2')
+           .addMetaTag('viewport', 'width=device-width, initial-scale=1');
   } catch (err) {
      Logger.log('doGet V2 Error: ' + err);
-     return HtmlService.createHtmlOutput('<h1>エラー</h1><p>ページの読み込みに失敗しました。</p>')
+     console.error('doGet V2 Error:', err); // ブラウザコンソールにもエラー出力試行
+     return HtmlService.createHtmlOutput('<h1>エラー</h1><p>ページの読み込みに失敗しました。詳細はログを確認してください。</p>')
                       .setTitle('エラー - 美容師練習管理アプリ V2');
   }
 }
