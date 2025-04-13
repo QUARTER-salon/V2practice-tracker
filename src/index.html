@@ -131,13 +131,34 @@
     function handleLogoutSuccess(result) {
     console.log("handleLogoutSuccess called. Result:", result);
     if (result && result.success) {
-        // リロード前に一瞬メッセージを見せたい場合（なくても良い）
-        // showMessage("ログアウトしました。再読み込みします...", "success", "message");
-        console.log("Reloading page after logout...");
-        window.location.reload(); // ← 直接リロード
+        // ★★★ 画面を未ログイン状態に書き換える処理 ★★★
+        const userInfoElement = document.querySelector('.user-info');
+        const mainContentElement = document.querySelector('.site-main');
+
+        if (userInfoElement) {
+            userInfoElement.innerHTML = ''; // ヘッダーのユーザー情報クリア
+        }
+        if (mainContentElement) {
+            // メインコンテンツをログインフォームに戻す
+            mainContentElement.innerHTML = `
+                 <h2>ログイン</h2>
+                 <div id="message" class="message"></div> <!-- メッセージ表示エリア -->
+                 <p>Googleアカウントでログインしてください。</p>
+                 <button class="btn btn--primary" onclick="loginWithGoogle()">Googleアカウントでログイン</button>
+            `;
+            // ログアウトメッセージを表示
+            showMessage("ログアウトしました。", "success", "message");
+        } else {
+            // 要素が見つからない場合のエラー処理（念のため）
+            console.error("Logout: .user-info or .site-main not found.");
+            showMessage("ログアウト処理中にエラーが発生しました(UI)。", "error"); // グローバルなメッセージエリアがあれば
+        }
+         // ★★★ ここまで ★★★
+
     } else {
         handleApiError(new Error("ログアウト処理で予期せぬ応答がありました。"));
     }
+
 }
 
 
