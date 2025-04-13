@@ -146,19 +146,14 @@
 
     // --- Googleログイン処理 ---
     function loginWithGoogle() {
-        if (!webAppUrl) {
-             console.error("Web App URL is not available. Cannot redirect for login.");
-             showMessage("ログイン処理を開始できません。ページをリロードしてください。", "error", "message");
-             return;
-        }
-        showMessage("Googleアカウントでログインしています...", "info", "message");
-        // 取得したWebアプリURLに遷移（これによりdoGetが再度呼ばれ認証フローが走る）
-        console.log('Redirecting to login URL:', webAppUrl);
-        setTimeout(() => {
-           window.location.href = webAppUrl;
-        }, 300); // 少し短縮
-    }
-
+    showMessage("Googleアカウントでログインしています...", "info", "message");
+    // WebアプリURLへの遷移ではなく、単純にリロードする
+    // これにより、現在の /dev URL で再度 doGet が実行され、認証フローが走る
+    console.log('Reloading page for login...');
+    setTimeout(() => {
+       window.location.reload();
+    }, 200); // 少し待ってからリロード
+}
     // --- ログアウト処理 ---
     function logoutUser() {
        console.log("Logging out...");
