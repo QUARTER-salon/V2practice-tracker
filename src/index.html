@@ -68,6 +68,7 @@
 
     // API呼び出し失敗時の処理 (変更なし)
     function handleApiError(error) {
+        console.log(">>> handleApiError CALLED. Error:", error);
       // ... (前回のコードと同じ) ...
     }
 
@@ -99,6 +100,7 @@
 
     // ログアウト成功時の処理 (変更なし、画面書き換え版のまま)
     function handleLogoutSuccess(result) {
+        console.log(">>> handleSessionCheck CALLED. Result:", result); 
         // ... (前回の画面書き換え版コードと同じ) ...
          console.log("handleLogoutSuccess called (screen update version). Result:", result);
          if (result && result.success) {
