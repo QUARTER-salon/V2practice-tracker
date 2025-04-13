@@ -33,21 +33,115 @@
 
   <?!= include('script'); ?> <!-- スクリプトを有効化 -->
   <script>
-    // domReady を使って初期化処理を実行する例
+    // DOM読み込み完了後に関数を実行
     domReady(function() {
-      console.log('DOM Ready! 初期化処理を実行できます。');
-      // ここにページ読み込み時に実行したい処理を追加できます
+      console.log("DOM Ready. Checking session...");
+      showMessage("セッションを確認中...", "info", "message"); // メッセージ表示エリアを指定
+
+      google.script.run
+        .withSuccessHandler(handleSessionCheck)
+        .withFailureHandler(handleApiError)
+        .checkSession(); // Auth.js の checkSession を呼び出す
     });
 
-    // テスト用関数
-    function testSuccessMessage() {
-      console.log('成功メッセージ表示ボタンクリック');
-      showMessage('テスト成功メッセージです！5秒後に消えます。', 'success', 'message');
+    // セッションチェック成功時の処理
+    function handleSessionCheck(result) {
+      console.log("Session check result:", result);
+      clearMessage("message"); // メッセージをクリア
+      const userInfoElement = document.querySelector('.user-info');
+      const mainContentElement = document.querySelector('.site-main'); // メインコンテンツエリアを取得
+
+      if (!userInfoElement || !mainContentElement) {
+          console.error("必要な要素が見つかりません (.user-info or .site-main)");
+          showMessage("ページの初期化に失敗しました。", "error", "message");
+          return;
+      }
+
+      if (result && result.isLoggedIn && result.userInfo) {
+        // ログイン済みの場合の処理
+        const userInfo = result.userInfo;
+        userInfoElement.innerHTML = `
+            <span>${userInfo.store} ${userInfo.name} さん ${userInfo.isAdmin ? '(管理者)' : ''}</span>
+            <button class="btn btn--secondary btn--small" onclick="logoutUser()">ログアウト</button>
+        `;
+        // メインコンテンツエリアを書き換え（本来は別ファイルをインクルードなど）
+        mainContentElement.innerHTML = `
+            <h2>練習記録</h2>
+            <div id="message" class="message"></div> <!-- メッセージ表示エリア -->
+            <p>ようこそ、${userInfo.name}さん。ここから練習記録を開始します。</p>
+            <!-- TODO: 練習記録フォームなどをここに表示 -->
+        `;
+        // 必要に応じて、管理者メニューへのリンクなどを isAdmin フラグで制御
+
+      } else {
+        // 未ログインの場合の処理
+        userInfoElement.innerHTML = ''; // ユーザー情報クリア
+        // メインコンテンツエリアをログインフォームに書き換え
+        mainContentElement.innerHTML = `
+             <h2>ログイン</h2>
+             <div id="message" class="message"></div> <!-- メッセージ表示エリア -->
+             <p>Googleアカウントでログインしてください。</p>
+             <button class="btn btn--primary" onclick="loginWithGoogle()">Googleアカウントでログイン</button>
+        `;
+        // エラーメッセージがあれば表示
+        if(result && result.error) {
+           showMessage(`ログインエラー: ${result.error}`, 'error', 'message');
+        } else {
+           showMessage("ログインしてください。", "info", "message");
+        }
+      }
     }
-    function testErrorMessage() {
-      console.log('エラーメッセージ表示ボタンクリック');
-      showMessage('テストエラーメッセージです。クリアボタンで消してください。', 'error', 'message');
+
+    // API呼び出し失敗時の処理
+    function handleApiError(error) {
+      console.error("API Error:", error);
+      // エラー発生時もログイン画面を表示させるなど、適切なUIにする
+      const userInfoElement = document.querySelector('.user-info');
+      const mainContentElement = document.querySelector('.site-main');
+       if (userInfoElement) userInfoElement.innerHTML = '';
+       if (mainContentElement) {
+            mainContentElement.innerHTML = `
+              <h2>エラー</h2>
+              <div id="message" class="message message--error message--visible">サーバーとの通信に失敗しました。</div>
+              <p>時間をおいて再試行するか、管理者に連絡してください。</p>
+              <p><small>エラー詳細: ${error.message || '不明なエラー'}</small></p>
+              <button class="btn btn--secondary" onclick="window.location.reload()">再読み込み</button>
+           `;
+       }
+      // handleError(error, "サーバーとの通信に失敗しました", "message"); // メッセージエリアに表示
     }
+
+    // Googleログイン処理 (シンプル版: ページリロードを促す)
+    function loginWithGoogle() {
+        showMessage("Googleアカウントでログインしています...", "info", "message");
+        // 認証は doGet アクセス時に行われるため、単純にリロードする
+        setTimeout(() => window.location.reload(), 500); // 少し待ってからリロード
+    }
+
+    // ログアウト処理
+    function logoutUser() {
+       console.log("Logging out...");
+       showMessage("ログアウト処理中...", "info", "message");
+       google.script.run
+         .withSuccessHandler(handleLogoutSuccess)
+         .withFailureHandler(handleApiError)
+         .logout(); // Auth.js の logout を呼び出す
+    }
+
+    function handleLogoutSuccess(result) {
+        if (result && result.success) {
+            showMessage("ログアウトしました。", "success", "message");
+            // 画面を未ログイン状態に戻す（リロードが簡単）
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            // logout自体が失敗することは考えにくいが念のため
+            handleApiError(new Error("ログアウト処理で予期せぬ応答がありました。"));
+        }
+    }
+
+    // --- 既存のテスト用関数 (不要なら削除) ---
+    function testSuccessMessage() { /* ... */ }
+    function testErrorMessage() { /* ... */ }
   </script>
 </body>
 </html>
