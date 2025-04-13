@@ -129,15 +129,10 @@
     }
 
     function handleLogoutSuccess(result) {
-        if (result && result.success) {
-            showMessage("ログアウトしました。", "success", "message");
-            // 画面を未ログイン状態に戻す（リロードが簡単）
-            setTimeout(() => window.location.reload(), 1500);
-        } else {
-            // logout自体が失敗することは考えにくいが念のため
-            handleApiError(new Error("ログアウト処理で予期せぬ応答がありました。"));
-        }
-    }
+    console.log("handleLogoutSuccess called. Result:", result); // まずこれが表示されるか
+    alert("ログアウト成功！"); // アラートで確実に止まるか確認
+    // window.location.reload(); // 一旦リロードはコメントアウト
+}
 
     // --- 既存のテスト用関数 (不要なら削除) ---
     function testSuccessMessage() { /* ... */ }
