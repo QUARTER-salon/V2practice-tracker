@@ -36,22 +36,8 @@
 3.  **テスト用GASプロジェクト作成:** Google Apps Script ダッシュボードで新しいGASプロジェクトを作成（例: `V2テスト練習アプリGAS`）し、その**スクリプトID**を控えます。
 4.  **claspログイン:** ターミナルで `clasp login` を実行し、Googleアカウントに接続します。
 5.  **GASプロジェクトと紐付け:** ターミナルで `clasp clone 【テスト用GASスクリプトID】 --rootDir ./src` を実行します。これにより `.clasp.json` と `src` フォルダが作成されます。
-6.  **.gitignore設定:** `V2テスト練習アプリ` フォルダ直下に `.gitignore` ファイルを作成し、以下を記述します。
-    ```gitignore
-    # clasp 設定ファイル (環境依存)
-    .clasp.json
-
-    # Node.js モジュール (もし使う場合)
-    node_modules/
-
-    # OS 生成ファイル
-    .DS_Store
-    Thumbs.db
-
-    # VS Code 設定
-    .vscode/
-    ```
-7.  **appsscript.json設定:** `src/appsscript.json` を開き、`timeZone`, `webapp`, `oauthScopes` などが `docs/REQUIREMENTS.txt` や本ガイドの推奨設定と一致しているか確認・修正します。**特に `webapp.executeAs` は `"USER_ACCESSING"` になっているか確認してください。**
+6.  **.gitignore設定:** `V2テスト練習アプリ` フォルダ直下に `.gitignore` ファイルを作成し、適切な内容（`.clasp.json`, `node_modules/` 等）を記述します。
+7.  **appsscript.json設定:** `src/appsscript.json` を開き、`timeZone`, `webapp` (`executeAs="USER_ACCESSING"`), `oauthScopes` などを確認・修正します。
 8.  **code.js設定:** `src/code.js` を作成または開き、`IS_PRODUCTION = false` とし、控えておいた **`TEST_SPREADSHEET_ID`** を設定します。各種シート名の定数も定義します。基本的な `doGet`, `include` 関数も記述します。
 9.  **初期Push:** ターミナルで `clasp push` を実行し、ローカルの `code.js` と `appsscript.json` がGASプロジェクトに反映されることを確認します。
 10. **初期コミット:** `git add .` と `git commit -m "初期設定: V2プロジェクトのセットアップ"` を実行し、ここまでの状態をGitに記録します。
@@ -73,22 +59,19 @@
 ### **【進捗：完了】Step 0: プロジェクト初期セットアップ**
 
 *   **目的:** V2プロジェクトの開発基盤を構築。
-*   **実施内容:** 本ガイドの「3. 開発プロジェクトの準備」に記載の作業を実施。ローカル開発環境、Gitリポジトリ、テスト用GASプロジェクト、基本設定ファイル（`.gitignore`, `.clasp.json`, `appsscript.json`, `code.js`）、ドキュメントフォルダ構造、基本ドキュメント（`README.txt`, `REQUIREMENTS.txt`, 本ガイド）の準備が完了。
-*   **状況:** 共通基盤の実装を開始できる状態。
+*   **実施内容:** 本ガイドの「3. 開発プロジェクトの準備」に記載の作業を実施。ローカル開発環境、Gitリポジトリ、テスト用GASプロジェクト、基本設定ファイル（`.gitignore`, `.clasp.json`, `appsscript.json`, `code.js`）、ドキュメントフォルダ構造、基本ドキュメント（`README.txt`, `REQUIREMENTS.txt`, 本ガイド, `CODING_STANDARD.txt`, `00_common_spec.txt`）の準備が完了。
+*   **状況:** 共通基盤の実装を完了し、認証機能の実装を開始できる状態。
 
-### **【進捗：実施中】Step 1: 共通基盤の実装とテスト**
+### **【進捗：完了】Step 1: 共通基盤の実装とテスト**
 
 *   **目的:** アプリ全体で利用する共通関数、スタイル、クライアントサイドJSを実装・テストする。
-*   **対象ファイル:** `src/Utils.js`, `src/styles.html`, `src/script.html`, `src/code.js` (一部) など。
-*   **現在の作業:**
-    *   `docs/CODING_STANDARD.txt` および `docs/specs/00_common_spec.txt` にデザイン方針、配色、コンポーネントスタイル、命名規則などを定義済み。
-    *   `src/styles.html` に基本CSS構造とスタイルをBEMに基づいて定義済み。
-    *   `src/Utils.js`, `src/script.html` ファイルを作成済み。
-*   **次のアクション:**
-    1.  `src/script.html` に共通クライアントサイドJS関数（例: `showMessage`, `formatDate`, `handleError` など）を実装する。
-    2.  `src/Utils.js` に共通GAS関数（例: `checkAdminAccess`, `isAdmin`, `logMessage` など）を実装・テスト (`clasp run` 等)。
-    3.  `src/code.js` の `doGet` で簡単なHTMLページ（例: `index.html` の骨組み）を返し、`<?!= include('styles'); ?>` と `<?!= include('script'); ?>` が機能するか確認する。
-*   **ドキュメント:** `docs/specs/00_common_spec.txt`, `docs/dev/00_common_dev.txt` を記述・更新。
+*   **実施内容:**
+    *   `docs/CODING_STANDARD.txt` および `docs/specs/00_common_spec.txt` にデザイン方針、配色、コンポーネントスタイル、命名規則などを定義。
+    *   `src/styles.html` に基本CSS構造とスタイルをBEMに基づいて定義。
+    *   `src/script.html` に共通クライアントサイドJS関数（`domReady`, `showMessage`, `clearMessage`, `formatDate`, `formatDateJP`, `handleError`, `collectFormData`, `throttle`, `debounce`）を実装。
+    *   `src/Utils.js` に共通GAS関数（`logMessage`, `isAdmin`, `checkAdminAccess`, `formatYmd`, `findColumnIndex`）を実装。
+    *   `src/code.js` の `doGet` で `index.html` を返し、`<?!= include('styles'); ?>` と `<?!= include('script'); ?>` が正常に機能することを確認。
+*   **状況:** 共通基盤は実装・テスト済み。
 
 ### **【進捗：計画中】Step 2: 認証機能の実装とテスト**
 
@@ -163,7 +146,7 @@
 1.  `src/code.js` の `IS_PRODUCTION` を `true` に変更。
 2.  `.clasp.json` の `scriptId` を **本番用GASプロジェクトID** に変更（または本番用ブランチで管理）。
 3.  `clasp push` で本番GASプロジェクトにコードを反映。
-4.  `clasp deploy -V 1 -d "初回本番デプロイ"` を実行 (コミットメッセージは日本語で)。
+4.  `clasp deploy -V 1 -d "初回本番デプロイ"` を実行。
 5.  表示される **Web アプリ URL** をユーザーに共有。
 
 ### 6.2 更新デプロイ (本番用)
@@ -184,7 +167,7 @@
     *   `main`: 本番反映用ブランチ。安定版のみマージ。
     *   `develop`: 開発の主軸となるブランチ。機能ブランチからマージ。
     *   `feature/xxx`: 各機能開発用のブランチ。`develop` から分岐し、完了後に `develop` へPull Request (推奨)。
-*   **コミット:** 意味のある単位で `git commit -m "コミットメッセージ(日本語)"` をこまめに行う。（例: `git commit -m "機能: ログイン画面の基本HTMLを作成"`）
+*   **コミット:** 意味のある単位で `git commit -m "コミットメッセージ(日本語)"` をこまめに行う。（例: `git commit -m "機能: ログイン画面の基本HTMLを作成"`） **コミットメッセージは原則として日本語で記述する。**
 *   **リモートリポジトリ:** GitHub等に `git push` してバックアップと共有を行う。
 
 ## 8. 注意事項
@@ -194,6 +177,8 @@
 *   **`appsscript.json`:** ローカルで管理し `clasp push` で反映させる。OAuthスコープ変更時はユーザー再認証が必要になる場合あり。
 *   **環境変数:** スプレッドシートID等は `code.js` でフラグ管理。APIキーなどの機密情報はコードに直接書かない（GASのプロパティストア等を利用検討）。
 *   **Node.js/claspバージョン:** 開発者間でバージョンを揃えることが望ましい (`clasp -v` で確認)。
+
+
 
 ## 9. 開発支援 (AI アシスタントの活用)
 
