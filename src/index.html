@@ -11,70 +11,140 @@
   <header class="site-header">
     <div class="container site-header__inner">
       <h1>美容師練習管理アプリ V2</h1>
-      <div class="user-info"></div>
+      <div class="user-info"></div> <!-- ユーザー情報表示エリア -->
     </div>
   </header>
 
   <main class="site-main container">
+    <!-- 初期表示: 必要であればローディング表示などをここに入れる -->
     <h2>ようこそ！</h2>
-    <p>これは共通基盤の動作確認用ページです。</p>
-
+    <p>セッション情報を確認しています...</p>
     <div id="message" class="message"></div> <!-- メッセージ表示エリア -->
 
+    <!-- テスト用ボタンは削除してもOK -->
+    <!--
     <button class="btn btn--primary" onclick="testSuccessMessage()">成功メッセージ表示</button>
     <button class="btn btn--danger" onclick="testErrorMessage()">エラーメッセージ表示</button>
-    <button class="btn btn--secondary" onclick="clearMessage('message')">メッセージクリア</button> <!-- clearMessageを呼び出す -->
-
+    <button class="btn btn--secondary" onclick="clearMessage('message')">メッセージクリア</button>
+    -->
   </main>
 
   <footer class="site-footer">
     <p>© 2025 美容師練習管理アプリ V2</p>
   </footer>
-  <?!= include('script'); ?> <!-- スクリプトを有効化 -->
+
+  <?!= include('script'); ?> <!-- 共通スクリプトを有効化 -->
   <script>
     let webAppUrl = ''; // WebアプリのURLを保持するグローバル変数
 
-    // DOM読み込み完了後に関数を実行
+    // --- DOM読み込み完了時の初期化処理 ---
     domReady(function() {
-      console.log("DOM Ready. Checking session...");
-      showMessage("セッションを確認中...", "info", "message"); // メッセージ表示エリアを指定
+      console.log("DOM Ready. Starting initialization...");
+      showMessage("初期化中...", "info", "message");
 
-      // ★★★ WebアプリURLを取得 ★★★
-      console.log("<<< Calling google.script.run.checkSession NOW >>>");
-      
+      // 1. WebアプリのURLを取得
+      console.log("<<< Calling google.script.run.getWebAppUrl NOW >>>");
       google.script.run
-          .withSuccessHandler(function(url) {
-              if (url) {
-                  webAppUrl = url;
-                  console.log('Web App URL:', webAppUrl);
-              } else {
-                  console.error('Failed to get Web App URL.');
-                  showMessage("ページの初期化に失敗しました(URL取得不可)。", "error", "message");
-              }
-          })
-          .withFailureHandler(handleApiError) // 既存のエラーハンドラを使う
-          .getWebAppUrl(); // GASの関数を呼び出す
-
-      // セッションチェックはURL取得と並行して実行しても良いが、
-      // ログインボタンが押されるまでURLは必須ではないのでこのままでもOK
-      google.script.run
-        .withSuccessHandler(handleSessionCheck)
-        .withFailureHandler(handleApiError)
-        .checkSession();
+        .withSuccessHandler(handleGetUrlSuccess) // URL取得成功ハンドラ
+        .withFailureHandler(handleApiError)   // 共通のエラーハンドラ
+        .getWebAppUrl(); // GAS関数呼び出し
     });
 
-    // セッションチェック成功時の処理 (変更なし)
+    // --- URL取得成功時の処理 ---
+    function handleGetUrlSuccess(url) {
+        console.log(">>> handleGetUrlSuccess CALLED. URL:", url);
+        if (url) {
+            webAppUrl = url;
+            console.log('Web App URL stored:', webAppUrl);
+            // 2. URL取得後にセッションチェックを開始
+            console.log("<<< Calling google.script.run.checkSession NOW >>>");
+            showMessage("セッションを確認中...", "info", "message"); // メッセージ更新
+            google.script.run
+                .withSuccessHandler(handleSessionCheck) // セッションチェック成功ハンドラ
+                .withFailureHandler(handleApiError)   // 共通のエラーハンドラ
+                .checkSession(); // GAS関数呼び出し
+        } else {
+            console.error('Failed to get Web App URL.');
+            showMessage("ページの初期化に失敗しました(URL取得不可)。", "error", "message");
+            // エラー時の表示などをここに記述
+            const mainContentElement = document.querySelector('.site-main');
+            if (mainContentElement) {
+                mainContentElement.innerHTML = '<h2>初期化エラー</h2><p>アプリケーションURLの取得に失敗しました。ページを再読み込みしてください。</p>';
+            }
+        }
+    }
+
+    // --- セッションチェック成功時の処理 ---
     function handleSessionCheck(result) {
-      // ... (前回のコードと同じ) ...
+      console.log(">>> handleSessionCheck CALLED. Result:", result);
+      clearMessage("message"); // メッセージをクリア
+      const userInfoElement = document.querySelector('.user-info');
+      const mainContentElement = document.querySelector('.site-main');
+
+      if (!userInfoElement || !mainContentElement) {
+          console.error("Required elements not found (.user-info or .site-main)");
+          showMessage("ページの初期化に失敗しました(要素不備)。", "error", "message");
+          return;
+      }
+
+      if (result && result.isLoggedIn && result.userInfo) {
+        // === ログイン済みの場合 ===
+        const userInfo = result.userInfo;
+        // ヘッダーにユーザー情報とログアウトボタン表示
+        userInfoElement.innerHTML = `
+            <span>${userInfo.store} ${userInfo.name} さん ${userInfo.isAdmin ? '(管理者)' : ''}</span>
+            <button class="btn btn--secondary btn--small" onclick="logoutUser()">ログアウト</button>
+        `;
+        // メインコンテンツエリアを練習記録画面などに書き換え
+        // TODO: 本来は練習記録フォームなどを表示する
+        mainContentElement.innerHTML = `
+            <h2>練習記録</h2>
+            <div id="message" class="message"></div> <!-- この画面用のメッセージエリア -->
+            <p>ようこそ、${userInfo.name}さん。ここから練習記録を開始します。</p>
+        `;
+        // 必要なら管理者メニューへの導線などを userInfo.isAdmin で制御
+
+      } else {
+        // === 未ログインの場合 ===
+        userInfoElement.innerHTML = ''; // ユーザー情報クリア
+        // メインコンテンツエリアをログインフォームに書き換え
+        mainContentElement.innerHTML = `
+             <h2>ログイン</h2>
+             <div id="message" class="message"></div> <!-- この画面用のメッセージエリア -->
+             <p>Googleアカウントでログインしてください。</p>
+             <button class="btn btn--primary" onclick="loginWithGoogle()">Googleアカウントでログイン</button>
+        `;
+        // エラーメッセージがあれば表示
+        if(result && result.error) {
+           showMessage(`ログインエラー: ${result.error}`, 'error', 'message');
+        } else {
+           // showMessage("ログインしてください。", "info", "message"); // ログインフォームが表示されるので不要かも
+        }
+      }
     }
 
-    // API呼び出し失敗時の処理 (変更なし)
+    // --- API呼び出し共通エラーハンドラ ---
     function handleApiError(error) {
-        console.log(">>> handleApiError CALLED. Error:", error);
-      // ... (前回のコードと同じ) ...
+      console.log(">>> handleApiError CALLED. Error:", error);
+      console.error("API Error Object:", error); // エラーオブジェクトの詳細も出力
+      const mainContentElement = document.querySelector('.site-main');
+      if (mainContentElement) {
+            mainContentElement.innerHTML = `
+              <h2>エラー</h2>
+              <div id="message" class="message message--error message--visible">サーバーとの通信中にエラーが発生しました。</div>
+              <p>時間をおいて再試行するか、管理者に連絡してください。</p>
+              <p><small>エラー詳細: ${error && error.message ? error.message : '不明なエラー'}</small></p>
+              <button class="btn btn--secondary" onclick="window.location.reload()">再読み込み</button>
+           `;
+       } else {
+           // メインコンテンツ要素がない場合（致命的エラー）
+           alert("重大なエラーが発生しました。ページの表示に必要な要素が見つかりません。");
+       }
+       // showMessage でも表示（もしメッセージエリアが残っていれば）
+       showMessage(`エラー: ${error && error.message ? error.message : '不明なエラー'}`, "error", "message");
     }
 
-    // Googleログイン処理を修正
+    // --- Googleログイン処理 ---
     function loginWithGoogle() {
         if (!webAppUrl) {
              console.error("Web App URL is not available. Cannot redirect for login.");
@@ -82,38 +152,61 @@
              return;
         }
         showMessage("Googleアカウントでログインしています...", "info", "message");
-        // リロードではなく、取得したURLに遷移する
+        // 取得したWebアプリURLに遷移（これによりdoGetが再度呼ばれ認証フローが走る）
         console.log('Redirecting to login URL:', webAppUrl);
-        setTimeout(() => { // 少し待機してから遷移
+        setTimeout(() => {
            window.location.href = webAppUrl;
-        }, 500); // 500ミリ秒待機
+        }, 300); // 少し短縮
     }
 
-    // ログアウト処理 (変更なし、画面書き換え版のまま)
+    // --- ログアウト処理 ---
     function logoutUser() {
-       // ... (前回の画面書き換え版コードと同じ) ...
        console.log("Logging out...");
        showMessage("ログアウト処理中...", "info", "message");
        google.script.run
          .withSuccessHandler(handleLogoutSuccess) // 画面書き換え版のハンドラ
-         .withFailureHandler(handleApiError)
-         .logout();
+         .withFailureHandler(handleApiError)    // 共通のエラーハンドラ
+         .logout(); // GAS関数呼び出し
     }
 
-    // ログアウト成功時の処理 (変更なし、画面書き換え版のまま)
+    // --- ログアウト成功時の処理 (画面書き換え版) ---
     function handleLogoutSuccess(result) {
-        console.log(">>> handleSessionCheck CALLED. Result:", result); 
-        // ... (前回の画面書き換え版コードと同じ) ...
-         console.log("handleLogoutSuccess called (screen update version). Result:", result);
+        console.log(">>> handleLogoutSuccess CALLED (screen update version). Result:", result);
          if (result && result.success) {
             const userInfoElement = document.querySelector('.user-info');
             const mainContentElement = document.querySelector('.site-main');
-            if (userInfoElement) userInfoElement.innerHTML = '';
+
+            if (userInfoElement) {
+                userInfoElement.innerHTML = ''; // ヘッダーのユーザー情報クリア
+            }
             if (mainContentElement) {
-                mainContentElement.innerHTML = `... (ログインフォームHTML) ...`; // ← ログインフォームのHTMLを記述
+                // メインコンテンツをログインフォームに戻す
+                mainContentElement.innerHTML = `
+                     <h2>ログイン</h2>
+                     <div id="message" class="message"></div> <!-- この画面用のメッセージエリア -->
+                     <p>Googleアカウントでログインしてください。</p>
+                     <button class="btn btn--primary" onclick="loginWithGoogle()">Googleアカウントでログイン</button>
+                `;
+                // ログアウトメッセージを表示
                 showMessage("ログアウトしました。", "success", "message");
-            } else { /* エラー処理 */ }
-         } else { /* エラー処理 */ }
+            } else {
+                console.error("Logout Success: .user-info or .site-main not found.");
+                showMessage("ログアウト処理中にエラーが発生しました(UI)。", "error");
+            }
+         } else {
+             // result.success が false だった場合 (通常は考えにくいが)
+             handleApiError(new Error("ログアウト処理で予期せぬ応答がありました。"));
+         }
+    }
+
+    // --- 元のテスト用関数 (不要なら削除) ---
+    function testSuccessMessage() {
+      console.log('成功メッセージ表示ボタンクリック');
+      showMessage('テスト成功メッセージです！5秒後に消えます。', 'success', 'message');
+    }
+    function testErrorMessage() {
+      console.log('エラーメッセージ表示ボタンクリック');
+      showMessage('テストエラーメッセージです。クリアボタンで消してください。', 'error', 'message');
     }
   </script>
 </body>
