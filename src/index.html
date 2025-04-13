@@ -131,13 +131,15 @@
     function handleLogoutSuccess(result) {
     console.log("handleLogoutSuccess called. Result:", result);
     if (result && result.success) {
-        showMessage("ログアウトしました。", "success", "message");
-        // ↓↓↓ これをコメントアウト
-        // setTimeout(() => window.location.reload(), 1500);
+        // リロード前に一瞬メッセージを見せたい場合（なくても良い）
+        // showMessage("ログアウトしました。再読み込みします...", "success", "message");
+        console.log("Reloading page after logout...");
+        window.location.reload(); // ← 直接リロード
     } else {
         handleApiError(new Error("ログアウト処理で予期せぬ応答がありました。"));
     }
 }
+
 
     // --- 既存のテスト用関数 (不要なら削除) ---
     function testSuccessMessage() { /* ... */ }
