@@ -40,6 +40,8 @@
       showMessage("セッションを確認中...", "info", "message"); // メッセージ表示エリアを指定
 
       // ★★★ WebアプリURLを取得 ★★★
+      console.log("<<< Calling google.script.run.checkSession NOW >>>");
+      
       google.script.run
           .withSuccessHandler(function(url) {
               if (url) {
