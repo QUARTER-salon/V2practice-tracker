@@ -62,6 +62,21 @@ function include(filename) {
   }
 }
 
+/**
+ * 現在のWebアプリケーションのURLを取得する
+ * @return {string} WebアプリのURL
+ */
+function getWebAppUrl() {
+    try {
+      const url = ScriptApp.getService().getUrl();
+      Logger.log('getWebAppUrl: URL=' + url);
+      return url;
+    } catch (e) {
+      Logger.log('getWebAppUrl Error: ' + e);
+      return null; // エラー時は null を返す
+    }
+  }
+
 // --- 共通ユーティリティ関数などをここに追加していく ---
 
 // 例：ログ出力関数 (Utils.js に移動予定)
